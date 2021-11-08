@@ -1,0 +1,64 @@
+// SPDX-License-Identifier: GPL-3.0
+
+pragma solidity >=0.8.9;
+
+contract RR{
+    
+    address private owner;
+    uint256 private odds = 0;
+    uint256 private turn = 0;
+    address[] private players;
+    address[] private losers;
+    
+    constructor() {
+        owner=msg.sender;
+    }
+    
+    function setOdds(uint256 oneInThisMany) public{
+        require(msg.sender==owner,"Caller is not owner");
+        odds=oneInThisMany;
+    }
+    
+    function addPlayer (address Player) public{
+        bool canAdd;
+        for (uint256 i=0; i<losers.length;i++) {
+            if (Player==losers[i]){
+                canAdd = false;
+            }
+        }
+        for (uint256 i=0; i<players.length;i++){
+           if (Player==players[i]){
+               canAdd = false;
+           }
+        }
+        if (canAdd==true){
+            players.push(Player);
+        }
+    }
+    function lose(address loser) internal{
+        delete players;
+        losers.push(loser);
+    }
+    function random() public view returns(uint){
+        uint randomNum = uint(keccak256(abi.encodePacked(block.timestamp, msg.sender)));
+        return (randomNum % odds)+1;
+    }
+    function play() public {
+        uint randomNum = random();
+        address currPlayer = players[turn];
+        if(randomNum==1) {
+            lose(currPlayer);
+        }
+        else {
+            turn++;
+        }
+    }
+    function isALoser(address player) public view returns(bool){
+        for (uint256 i=0; i<losers.length;i++) {
+            if (player==losers[i]){
+                return true;
+            }
+        }
+        return false;
+    }
+}
